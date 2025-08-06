@@ -4,6 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Цифровий годинник</title>
+
+  <!-- PWA support -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#000000">
+
   <style>
     @font-face {
       font-family: 'Font';
@@ -75,11 +80,6 @@
   </div>
   <div class="date" id="date">5 серпня 2025</div>
 
-  <!-- Невидиме відео -->
-  <video id="stay-awake" loop muted playsinline style="display: none">
-    <source src="data:video/mp4;base64,AAAAHGZ0eXBtcDQyAAAAAG1wNDFtcDQyaXNvbWF2YzEAAAAIZnJlZQAAACBtZGF0AAAAAA==" type="video/mp4">
-  </video>
-
   <script>
     const monthNames = [
       "січня", "лютого", "березня", "квітня", "травня", "червня",
@@ -110,23 +110,33 @@
       if (!document.fullscreenElement) {
         (el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen).call(el);
       }
-
-      // Спроба Wake Lock (може не підтримуватись)
-      if ('wakeLock' in navigator) {
-        navigator.wakeLock.request('screen').catch(() => {});
-      }
-
-      // Відтворення невидимого відео — 100% працює
-      const video = document.getElementById('stay-awake');
-      video.play().catch(err => {
-        console.error("Не вдалося запустити відео для запобігання сну:", err);
-      });
     }
+
+    // Wake Lock API
+    let wakeLock = null;
+    async function requestWakeLock() {
+      try {
+        wakeLock = await navigator.wakeLock.request('screen');
+        wakeLock.addEventListener('release', () => {
+          console.log('Wake Lock released');
+        });
+        console.log('Wake Lock is active');
+      } catch (err) {
+        console.error(`${err.name}, ${err.message}`);
+      }
+    }
+
+    document.addEventListener('visibilitychange', () => {
+      if (wakeLock !== null && document.visibilityState === 'visible') {
+        requestWakeLock();
+      }
+    });
 
     window.addEventListener('resize', resizeFont);
     setInterval(updateClock, 1000);
     updateClock();
     resizeFont();
+    requestWakeLock();
   </script>
 </body>
 </html>
