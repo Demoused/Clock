@@ -30,19 +30,11 @@
     .clock {
       display: grid;
       justify-content: center;
-      /* 8 колонок: 2 цифри, :, 2 цифри, :, 2 цифри */
       grid-template-columns:
-        1ch  /* година десятки */
-        1ch  /* година одиниці */
-        0.5ch/* роздільник */
-        1ch  /* хвилина десятки */
-        1ch  /* хвилина одиниці */
-        0.5ch/* роздільник */
-        1ch  /* секунда десятки */
-        1ch; /* секунда одиниці */
-      /* прибираємо letter-spacing, бо тепер колонка точно відповідає */
+        1ch 1ch 0.5ch 1ch 1ch 0.5ch 1ch 1ch;
       letter-spacing: 0;
     }
+
     .digit, .colon {
       display: flex;
       justify-content: center;
@@ -52,6 +44,7 @@
     .colon {
       animation: blink 1s steps(1) infinite;
     }
+
     @keyframes blink {
       0%,49%   { opacity: 1; }
       50%,100% { opacity: 0; }
@@ -59,7 +52,6 @@
 
     .date {
       margin-top: 1rem;
-      /* розмір дати теж можна підлаштувати в JS, але за замовчуванням: */
       font-size: 6vw;
     }
 
@@ -83,6 +75,11 @@
   </div>
   <div class="date" id="date">5 серпня 2025</div>
 
+  <!-- Невидиме відео -->
+  <video id="stay-awake" loop muted playsinline style="display: none">
+    <source src="data:video/mp4;base64,AAAAHGZ0eXBtcDQyAAAAAG1wNDFtcDQyaXNvbWF2YzEAAAAIZnJlZQAAACBtZGF0AAAAAA==" type="video/mp4">
+  </video>
+
   <script>
     const monthNames = [
       "січня", "лютого", "березня", "квітня", "травня", "червня",
@@ -104,7 +101,6 @@
     function resizeFont() {
       const clock = document.getElementById('clock');
       const vw = window.innerWidth;
-      // 8 колонок => нехай вони займають 90% ширини
       const fontSize = (vw * 0.9) / 8;
       clock.style.fontSize = fontSize + 'px';
     }
@@ -114,6 +110,17 @@
       if (!document.fullscreenElement) {
         (el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen).call(el);
       }
+
+      // Спроба Wake Lock (може не підтримуватись)
+      if ('wakeLock' in navigator) {
+        navigator.wakeLock.request('screen').catch(() => {});
+      }
+
+      // Відтворення невидимого відео — 100% працює
+      const video = document.getElementById('stay-awake');
+      video.play().catch(err => {
+        console.error("Не вдалося запустити відео для запобігання сну:", err);
+      });
     }
 
     window.addEventListener('resize', resizeFont);
